@@ -130,7 +130,7 @@ curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "User clicks Add to Cart button, cart icon shows count of 1, checkout button becomes visible",
-    "url": "https://myapp.com/products/widget-1"
+    "url": "https://example.com/products/widget-1"
   }'
 ```
 
@@ -195,7 +195,7 @@ curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/run_all" \
   -H "Authorization: Bearer $PROXYUSER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "target_url": "https://staging.myapp.com",
+    "target_url": "https://staging.example.com",
     "folder_ids": ["fold_abc123", "fold_def456"]
   }'
 ```
@@ -410,6 +410,88 @@ Parameters:
 - `instructions` (optional) - Shared context for all scenarios in the folder
 - `schedule` (optional) - Cron expression for recurring test runs
 
+**For folders requiring authentication:**
+
+```bash
+curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/folders" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "User Dashboard",
+    "instructions": "First, log in with {{EMAIL}} and {{PASSWORD}}"
+  }'
+```
+
+**Note:** Set the scenario URLs to the login page (e.g., `https://example.com/login`) when using auth instructions.
+
+### Folder Instructions and Inheritance
+
+When you set `instructions` on a folder, **all scenarios in that folder inherit those instructions**. This is ideal for shared setup steps like authentication.
+
+#### When to Use Folder-Level Authentication
+
+Use folder-level instructions when:
+- Multiple scenarios in the folder require the same login
+- All tests start from an authenticated state
+- You want DRY (Don't Repeat Yourself) test organization
+
+Use scenario-level authentication when:
+- Only one or two scenarios need authentication
+- Different scenarios need different credentials
+- The auth flow IS what you're testing
+
+#### Example: Folder with Authentication
+
+```bash
+curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/folders" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Dashboard Features",
+    "instructions": "First, log in with {{EMAIL}} and {{PASSWORD}}"
+  }'
+```
+
+Now scenarios in this folder are simple:
+```
+User can view analytics chart
+User can export data to CSV
+User can update notification settings
+```
+
+The AI will log in first (from folder instructions), then execute the scenario.
+
+#### Before/After: DRY Principle
+
+**Before (repetitive):**
+```
+📁 Dashboard (no instructions)
+   - User logs in with {{EMAIL}} and {{PASSWORD}}, then views analytics
+   - User logs in with {{EMAIL}} and {{PASSWORD}}, then exports data
+   - User logs in with {{EMAIL}} and {{PASSWORD}}, then updates settings
+```
+
+**After (using folder instructions):**
+```
+📁 Dashboard
+   instructions: "First, log in with {{EMAIL}} and {{PASSWORD}}"
+   - User can view analytics chart
+   - User can export data to CSV
+   - User can update notification settings
+```
+
+#### Starting URL for Authentication
+
+When tests require authentication, set the scenario's starting URL to the login page:
+
+| Scenario Type | Starting URL |
+|--------------|--------------|
+| Public page test | `https://example.com/` |
+| Authenticated test | `https://example.com/login` |
+| Deep-link after auth | `https://example.com/login` (AI navigates after login) |
+
+**Note:** Even if your folder instructions say to log in, the browser needs to start on a page where login is possible.
+
 ### Running All Scenarios in a Folder
 
 ```bash
@@ -429,7 +511,7 @@ curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "User can add item to cart",
-    "url": "https://myapp.com/products",
+    "url": "https://example.com/products",
     "folder_id": "fold_abc123"
   }'
 ```
@@ -503,7 +585,7 @@ Authorization: Bearer sk_live_xxx
   "project_id": "proj_xxx",
   "folder_id": "fold_xxx",  // null if not in a folder
   "prompt": "User can sign up with email",
-  "url": "https://myapp.com",
+  "url": "https://example.com",
   "is_active": true,
   "schedule": null,
   "created_at": "2024-01-15T10:30:00Z",

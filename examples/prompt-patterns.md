@@ -10,6 +10,50 @@ User can log out and return to login page
 User can request a password reset
 User can sign up with a valid email address
 
+### Authentication Best Practices
+
+**Folder-level authentication** (recommended for most cases):
+
+Set `instructions` on the folder, then keep scenarios simple. All scenarios in the folder inherit the login step.
+
+```
+📁 Account Settings
+   instructions: "First, log in with {{EMAIL}} and {{PASSWORD}}"
+
+   - User can change display name
+   - User can update email preferences
+   - User can enable two-factor authentication
+```
+
+**Scenario-level authentication** (when testing login itself):
+
+```
+User can log in with {{EMAIL}} and {{PASSWORD}}
+User sees error when entering wrong password
+User can log out and return to home page
+```
+
+**Starting URL**: When authentication is required, set the starting URL to the login page:
+- `https://example.com/login` (correct)
+- `https://example.com/` (may redirect unexpectedly)
+
+**Good authentication scenarios:**
+
+```
+User can log in with {{EMAIL}} and {{PASSWORD}}
+User can log in and access the dashboard
+User sees error when password is incorrect
+User is redirected to login when accessing protected page
+```
+
+**Authentication scenarios to avoid:**
+
+```
+User receives login verification email ❌
+User enters SMS verification code ❌
+User completes Google OAuth flow ❌
+```
+
 ## CRUD Operations
 
 User can create a new item
