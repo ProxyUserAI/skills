@@ -19,6 +19,8 @@ export PROXYUSER_API_KEY="sk_live_your_key_here"
 
 Create API keys at https://proxyuser.com/settings/api_keys
 
+**Fallback:** If `$PROXYUSER_API_KEY` is not set in the environment, check the project's root `.env` file for `PROXYUSER_API_KEY=sk_live_xxx`.
+
 ### Verify Setup
 
 ```bash
@@ -185,45 +187,137 @@ curl -s "https://proxyuser.com/api/v1/runs?status=failed&limit=10" \
 
 ## Writing Effective Scenarios
 
-### Prompt Structure
+### Keep It Simple
 
-Good prompts follow: **Action → Observable Result → Verification**
+ProxyUser's AI browses like a human. Trust it to figure out the details—don't write step-by-step instructions.
 
 **Good:**
+```
+User can sign up with a valid email address
+```
+
+**Bad:**
 ```
 User enters "test@example.com" in email field, clicks Submit button,
 sees "Check your inbox" confirmation message on screen
 ```
 
-**Bad:**
-```
-Test the signup form
-```
-
 ### Code-to-Test Translation
 
-When you implement a feature, ask: "What would a user do to verify this works?"
+When you implement a feature, ask: "What capability does this give the user?"
 
 | Code Change | Test Prompt |
 |-------------|-------------|
-| Add delete button | "User clicks delete icon on first item, confirmation dialog appears, clicks Confirm, item is removed from list" |
-| Implement search | "User types 'widget' in search box, results update to show only items containing 'widget'" |
-| Add form validation | "User leaves email empty, clicks Submit, sees 'Email is required' error" |
-| Add pagination | "User scrolls to bottom, clicks Load More, additional items appear below" |
-| Implement login | "User enters {{EMAIL}} in email field, enters {{PASSWORD}} in password, clicks Sign In, sees dashboard" |
+| Add delete button | "User can delete an item from the list" |
+| Implement search | "User can search for items by name" |
+| Add form validation | "User sees error when submitting with empty email" |
+| Add pagination | "User can load more items at bottom of list" |
+| Implement login | "User can log in with {{EMAIL}} and {{PASSWORD}}" |
 
 ### Environment Variables
 
 Use `{{VAR}}` for credentials (configured in ProxyUser dashboard):
 
 ```
-User enters {{TEST_EMAIL}} in email field, enters {{TEST_PASSWORD}} in password field,
-clicks Login, sees Welcome message
+User can log in with {{EMAIL}} and {{PASSWORD}}
 ```
 
 ### Common Patterns
 
 See [examples/prompt-patterns.md](examples/prompt-patterns.md) for a library of reusable test scenario templates.
+
+---
+
+## Organizing Scenarios
+
+### Use Folders to Group Related Tests
+
+Avoid creating a flat list of scenarios. Group tests by feature area, user flow, or page section.
+
+**Good organization:**
+```
+📁 Authentication
+   - User can sign up with email
+   - User can log in with credentials
+   - User can reset password
+📁 Shopping Cart
+   - User can add item to cart
+   - User can remove item from cart
+   - User can update quantity
+📁 Checkout
+   - User can complete purchase
+   - User can apply discount code
+```
+
+**Bad organization:**
+```
+- User can sign up
+- User can add to cart
+- User can log in
+- User can checkout
+- User can reset password
+- User can remove from cart
+... (12 more unorganized scenarios)
+```
+
+### Before Creating Scenarios
+
+**Step 1: List existing folders**
+
+```bash
+curl -s "https://proxyuser.com/api/v1/projects/$PROJECT_ID/folders" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" | jq '.data.folders[] | {id, name, scenarios_count}'
+```
+
+To see scenarios within each folder, add `?include_scenarios=true`.
+
+**Step 2: Choose the right folder**
+
+- If a folder exists that matches the feature area → use it
+- If no folder fits → create one (see below)
+- If adding multiple related scenarios → create a folder for them
+
+### Creating a Folder
+
+```bash
+curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/folders" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Shopping Cart",
+    "instructions": "All tests start from the product catalog page",
+    "schedule": "0 9 * * *"
+  }'
+```
+
+Parameters:
+- `name` (required) - Folder name
+- `instructions` (optional) - Shared context for all scenarios in the folder
+- `schedule` (optional) - Cron expression for recurring test runs
+
+### Running All Scenarios in a Folder
+
+```bash
+curl -X POST "https://proxyuser.com/api/v1/folders/$FOLDER_ID/run" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY"
+```
+
+All triggered tests share a `batch_id` for unified tracking.
+
+### Assigning Scenarios to Folders
+
+Include `folder_id` when creating scenarios:
+
+```bash
+curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "User can add item to cart",
+    "url": "https://myapp.com/products",
+    "folder_id": "fold_abc123"
+  }'
+```
 
 ---
 
@@ -253,6 +347,12 @@ Authorization: Bearer sk_live_xxx
 | POST | `/projects/:id/run_all` | Run all active scenarios |
 | GET | `/projects/:id/scenarios` | List scenarios |
 | POST | `/projects/:id/scenarios` | Create scenario |
+| GET | `/projects/:id/folders` | List folders |
+| POST | `/projects/:id/folders` | Create folder |
+| GET | `/folders/:id` | Get folder details |
+| PATCH | `/folders/:id` | Update folder |
+| DELETE | `/folders/:id` | Delete folder |
+| POST | `/folders/:id/run` | Run all scenarios in folder |
 | GET | `/scenarios/:id` | Get scenario with recent runs |
 | PATCH | `/scenarios/:id` | Update scenario |
 | DELETE | `/scenarios/:id` | Delete scenario |
