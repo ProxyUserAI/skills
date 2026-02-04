@@ -46,7 +46,7 @@ curl -s https://proxyuser.com/api/v1/projects \
 When implementing a feature that needs E2E coverage:
 
 ```
-- [ ] List existing scenarios to avoid duplicates
+- [ ] **List existing scenarios and review coverage before suggesting new tests**
 - [ ] Identify the user journey the feature enables
 - [ ] Write scenario with specific, observable assertions
 - [ ] Run scenario to verify it passes
@@ -242,6 +242,24 @@ Focus on high-impact tests first. If this breaks, does the business suffer?
 - Cosmetic hover states
 - Admin-only features (test manually)
 - Edge cases that affect <1% of users
+
+### Scenario Guardrails
+
+**Before suggesting any new scenarios:**
+
+1. **List existing scenarios first** - Run the list scenarios API call and review what's already covered
+2. **Check for overlapping coverage** - Don't suggest tests that duplicate existing functionality
+3. **Limit recommendations** - Recommend a maximum of 20 scenarios per session. Quality > quantity.
+
+**When reviewing existing scenarios, look for:**
+- Similar user journeys (e.g., "User can add item" vs "User adds product to cart")
+- Overlapping test coverage (e.g., login tested in multiple scenarios)
+- Tests that could be consolidated
+
+**Red flags that you're over-testing:**
+- More than 5 scenarios for a single feature
+- Scenarios testing minor variations of the same flow
+- Tests for edge cases affecting <1% of users
 
 ### Test Boundaries
 
