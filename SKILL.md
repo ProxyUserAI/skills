@@ -226,6 +226,48 @@ User can log in with {{EMAIL}} and {{PASSWORD}}
 
 See [examples/prompt-patterns.md](examples/prompt-patterns.md) for a library of reusable test scenario templates.
 
+### Prioritizing Test Scenarios
+
+Focus on high-impact tests first. If this breaks, does the business suffer?
+
+**Test these first (in order):**
+
+1. **Revenue-critical paths** - Checkout, payment, subscription upgrades
+2. **User acquisition** - Signup, onboarding completion
+3. **Core product value** - The main thing users come to do
+4. **Authentication** - Login, logout, password reset
+5. **Key error states** - Validation errors, failure messages users need to see
+
+**Skip these (low impact):**
+- Cosmetic hover states
+- Admin-only features (test manually)
+- Edge cases that affect <1% of users
+
+### Test Boundaries
+
+**Only test what can be completed entirely within the browser.**
+
+ProxyUser controls a browser. It cannot check email inboxes, receive SMS codes, or interact with external services.
+
+❌ **Do NOT create scenarios that require:**
+
+- Checking email (verification links, password reset emails)
+- SMS or phone verification
+- Third-party OAuth (Google, Apple, Facebook login buttons)
+- External service responses (Slack notifications, webhook deliveries)
+- Real payment processing (use test/sandbox modes instead)
+- Mobile app interactions
+- Desktop notifications or OS-level prompts
+
+✅ **Instead, test the browser-side behavior:**
+
+| Don't test this | Test this instead |
+|-----------------|-------------------|
+| "User receives verification email" | "User sees 'Check your email' confirmation" |
+| "User logs in with Google" | "User sees Google login button and it's clickable" |
+| "Payment completes successfully" | "User can submit payment form" (in test mode) |
+| "User gets Slack notification" | "User sees 'Notification sent' message in UI" |
+
 ---
 
 ## Organizing Scenarios

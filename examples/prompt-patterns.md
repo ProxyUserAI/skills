@@ -86,3 +86,14 @@ User can update profile information
 - One scenario = one capability
 - Use {{EMAIL}} and {{PASSWORD}} for credentials
 - Only be specific when testing exact text matters
+
+## Scenarios to Avoid
+
+These require actions outside the browser—ProxyUser can't complete them:
+
+- User clicks verification link in email ❌
+- User enters SMS code ❌
+- User completes Google/Apple/Facebook login ❌
+- User receives Slack/Discord notification ❌
+
+See SKILL.md "Test Boundaries" for alternatives.
