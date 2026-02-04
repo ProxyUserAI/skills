@@ -48,7 +48,16 @@ With this skill, your AI coding assistant can:
 - **Diagnose failures** using AI analysis and video recordings
 - **Set up CI/CD** integration with GitHub Actions
 
-## Example Prompts
+## Usage
+
+### Slash command
+
+Invoke directly:
+```
+/proxyuser
+```
+
+### Natural language
 
 > "Create E2E tests for the new checkout feature I just implemented"
 
