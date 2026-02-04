@@ -39,6 +39,73 @@ curl -s https://proxyuser.com/api/v1/projects \
 
 ---
 
+## When Invoked Without Instructions
+
+If the user invokes `/proxyuser` without specifying what they want to do:
+
+**Ask the user to choose:**
+
+1. **Generate starter tests** - Analyze the codebase and create foundational E2E tests
+2. **Create test for a feature** - Write a test for something specific
+3. **Run tests** - Execute existing tests against a URL
+4. **Check recent failures** - Diagnose and investigate failed tests
+
+### Starter Tests Workflow
+
+When the user chooses "Generate starter tests":
+
+**Step 1: Understand the application**
+
+Analyze the codebase to identify:
+- App type (e-commerce, SaaS, content site, etc.)
+- Main user-facing routes and pages
+- Authentication patterns (email/password, OAuth, magic link)
+- Core features that deliver user value
+
+Look at: route files, navigation components, page directories, and any existing test coverage.
+
+**Step 2: Check existing coverage**
+
+List all existing scenarios in the project to avoid duplicates:
+
+```bash
+curl -s "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" | jq '.data.scenarios[].prompt'
+```
+
+**Step 3: Suggest foundational tests**
+
+Recommend scenarios following the prioritization order:
+
+1. **Revenue-critical paths** - Checkout, payment, upgrade flows
+2. **User acquisition** - Signup, onboarding
+3. **Core product value** - The main thing users come to do
+4. **Authentication** - Login, logout, password reset
+
+Limit initial suggestions to 5-10 high-impact scenarios. Quality over quantity.
+
+**Step 4: Create scenarios with proper organization**
+
+Group related tests into folders. Create folders first, then add scenarios to them.
+
+Example structure for an e-commerce app:
+```
+📁 Authentication
+   - User can sign up with email
+   - User can log in with credentials
+📁 Shopping
+   - User can add item to cart
+   - User can view cart
+📁 Checkout
+   - User can complete purchase
+```
+
+**Step 5: Run initial tests**
+
+After creating scenarios, run them once to verify they pass on the current production URL.
+
+---
+
 ## Workflows
 
 ### Create Test for New Feature
@@ -379,6 +446,26 @@ curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
   }'
 ```
 
+### Moving Scenarios Between Folders
+
+To move an existing scenario to a different folder:
+
+```bash
+curl -X PATCH "https://proxyuser.com/api/v1/scenarios/$SCENARIO_ID" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"folder_id": "fold_newFolder123"}'
+```
+
+To remove a scenario from its folder (move to root/unfiled):
+
+```bash
+curl -X PATCH "https://proxyuser.com/api/v1/scenarios/$SCENARIO_ID" \
+  -H "Authorization: Bearer $PROXYUSER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"folder_id": null}'
+```
+
 ---
 
 ## API Reference
@@ -414,11 +501,27 @@ Authorization: Bearer sk_live_xxx
 | DELETE | `/folders/:id` | Delete folder |
 | POST | `/folders/:id/run` | Run all scenarios in folder |
 | GET | `/scenarios/:id` | Get scenario with recent runs |
-| PATCH | `/scenarios/:id` | Update scenario |
+| PATCH | `/scenarios/:id` | Update scenario (including folder assignment) |
 | DELETE | `/scenarios/:id` | Delete scenario |
 | POST | `/scenarios/:id/run` | Trigger test run |
 | GET | `/runs` | List runs (filter: status, project_id, scenario_id) |
 | GET | `/runs/:id` | Get run with AI diagnosis |
+
+### Scenario Object
+
+```json
+{
+  "id": "scen_xxx",
+  "project_id": "proj_xxx",
+  "folder_id": "fold_xxx",  // null if not in a folder
+  "prompt": "User can sign up with email",
+  "url": "https://myapp.com",
+  "is_active": true,
+  "schedule": null,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
 
 ### Response Format
 
