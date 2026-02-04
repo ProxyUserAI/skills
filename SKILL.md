@@ -1,5 +1,5 @@
 ---
-name: managing-proxyuser-tests
+name: proxyuser
 description: Creates, runs, and monitors E2E tests via ProxyUser API. Use when implementing features that need E2E test coverage, when tests fail and need diagnosis, when running tests against preview deployments, or when setting up automated QA for a web application.
 ---
 
