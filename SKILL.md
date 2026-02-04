@@ -100,10 +100,6 @@ Example structure for an e-commerce app:
    - User can complete purchase
 ```
 
-**Step 5: Run initial tests**
-
-After creating scenarios, run them once to verify they pass on the current production URL.
-
 ---
 
 ## Workflows
@@ -116,7 +112,6 @@ When implementing a feature that needs E2E coverage:
 - [ ] **List existing scenarios and review coverage before suggesting new tests**
 - [ ] Identify the user journey the feature enables
 - [ ] Write scenario with specific, observable assertions
-- [ ] Run scenario to verify it passes
 - [ ] Commit scenario alongside feature code
 ```
 
@@ -137,13 +132,6 @@ curl -X POST "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
     "prompt": "User clicks Add to Cart button, cart icon shows count of 1, checkout button becomes visible",
     "url": "https://myapp.com/products/widget-1"
   }'
-```
-
-**Step 3: Run and verify**
-
-```bash
-curl -X POST "https://proxyuser.com/api/v1/scenarios/$SCENARIO_ID/run" \
-  -H "Authorization: Bearer $PROXYUSER_API_KEY"
 ```
 
 ---
