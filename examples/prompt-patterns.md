@@ -1,6 +1,6 @@
-# Test Scenario Prompt Patterns
+# Scenario Prompt Patterns
 
-Simple, human-like test scenarios. ProxyUser's AI browses like a human—trust it to figure out the details.
+Simple, human-like scenarios. ProxyUser's AI browses like a human — trust it to figure out the details.
 
 ## Authentication
 
@@ -25,7 +25,7 @@ Set `instructions` on the folder, then keep scenarios simple. All scenarios in t
    - User can enable two-factor authentication
 ```
 
-**Scenario-level authentication** (when testing login itself):
+**Scenario-level authentication** (when the login flow is what you're checking):
 
 ```
 User can log in with {{EMAIL}} and {{PASSWORD}}
@@ -129,7 +129,7 @@ User can update profile information
 - Start with "User can..." or "User sees..."
 - One scenario = one capability
 - Use {{EMAIL}} and {{PASSWORD}} for credentials
-- Only be specific when testing exact text matters
+- Only be specific when exact text matters
 
 ## Scenarios to Avoid
 
@@ -140,4 +140,4 @@ These require actions outside the browser—ProxyUser can't complete them:
 - User completes Google/Apple/Facebook login ❌
 - User receives Slack/Discord notification ❌
 
-See SKILL.md "Test Boundaries" for alternatives.
+See SKILL.md "Scenario Boundaries" for alternatives.
