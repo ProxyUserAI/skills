@@ -115,7 +115,7 @@ curl -X POST "https://proxyuser.com/api/v1/agent/verify" \
   -d '{"otp": "123456"}'
 ```
 
-**On success (200):** the same key is now `full` scope. Response: `{ api_key_scope: "full", user, organization, dashboard_url }`. **Do not re-persist** — the file from signup already has the right key. Continue with the user's original task.
+**On success (200):** the same key is now `full` scope. Response: `{ api_key_scope: "full", user, organization, dashboard_url, magic_link_url }`. **Do not re-persist the key** — the file from signup already has the right token. The `magic_link_url` is a one-time, 15-minute URL that signs the user into the web dashboard — surface it verbatim in the [After signup](#after-signup) message.
 
 **Failure handling:**
 
@@ -125,11 +125,11 @@ curl -X POST "https://proxyuser.com/api/v1/agent/verify" \
 
 ### After signup
 
-Tell the user:
+Tell the user, substituting the `magic_link_url` from the verify response verbatim:
 
-> "You're all set. I'll add scenarios as you describe them. Your dashboard is at https://proxyuser.com/dashboard if you ever want to look — but you shouldn't need to."
+> "You're all set. To open your dashboard, click here: `<magic_link_url>` (signs you in directly, expires in 15 minutes). You'll want it for connecting Slack, managing billing, and inviting teammates. I'll keep adding scenarios from here."
 
-Then continue with the user's original task — typically `POST /api/v1/projects` to create a project followed by `POST /api/v1/projects/:id/scenarios`. Do not redirect the user to the dashboard before they have a scenario.
+Then continue with the user's original task — typically `POST /api/v1/projects` to create a project followed by `POST /api/v1/projects/:id/scenarios`. Don't pause for the user to click the dashboard link first; they can do that whenever.
 
 ### Verify Setup
 
