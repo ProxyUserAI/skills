@@ -171,6 +171,7 @@ Read enough of the repo to know what the product *actually does*. Don't skim —
 - **Route definitions.** `config/routes.rb`, `app/router.tsx`, `pages/`, `app/`, `routes/` — map the user-facing URLs.
 - **Page/component directories.** `app/frontend/pages/`, `src/pages/`, `app/`, `components/` — what does each major page do?
 - **Navigation components.** Top nav, sidebar, footer — these reveal the *user's* mental map of the app, not the developer's file tree.
+- **Auth shape.** *Read the actual login and signup forms* and figure out what fields they want. Apps vary — email + password, username + password, phone + password, email + magic link (no password), email + OTP code, etc. Look at the login form's input names/labels (`<input name="username">`, `<input type="email">`), the signup form, and any auth gem config (Devise, Authlogic, NextAuth, Better Auth, Clerk, etc.). The placeholder names you use in prompts (`{{EMAIL}}` vs `{{USERNAME}}` vs `{{PHONE}}`) and the env vars you ask the user to set must match what the form expects. Magic-link-only apps can't be tested post-login by the agent at all (the email step is out of reach) — flag this and skip the authenticated section.
 - **Marketing copy.** Landing page hero, feature sections, pricing copy, README "About" — the product's own pitch tells you what flow delivers the core value.
 - **Existing scenario coverage** — list scenarios already in the project to avoid duplicates:
 
@@ -188,11 +189,18 @@ Cover **both halves of the app**:
 - **Public pages** — marketing, pricing, public tools, content pages users see before signing in.
 - **Authenticated app functionality** — the dashboards, editors, settings pages, and workflows users actually *do* once logged in. **This is usually what the user cares about most**, and the most likely thing to silently break. Do not skip it just because it sits behind a login form.
 
-If the codebase has authenticated routes (and most apps do), **ask for a test account up front** as part of your proposal — don't quietly skip the post-login work:
+If the codebase has authenticated routes (and most apps do), **ask for a test account up front** as part of your proposal — don't quietly skip the post-login work. Use the field names you actually saw in the login form, not a generic `EMAIL`/`PASSWORD` template. Examples:
 
-> *"For the post-login scenarios I'll need a test account on production. Either set `EMAIL` and `PASSWORD` as project environment variables in ProxyUser, or paste them here and I'll set them. They're stored encrypted and never echoed back. The agent uses `{{EMAIL}}` and `{{PASSWORD}}` in scenario prompts to fill in the values at run time."*
+- Email + password app → ask for `EMAIL` and `PASSWORD`, prompts use `{{EMAIL}}` and `{{PASSWORD}}`.
+- Username + password app → ask for `USERNAME` and `PASSWORD`, prompts use `{{USERNAME}}` and `{{PASSWORD}}`.
+- Phone + password app → `PHONE` and `PASSWORD`.
+- Magic-link-only app → don't ask; the agent can't read inboxes, so authenticated scenarios are out of scope. Tell the user and propose only the public/marketing scenarios.
 
-Then propose 5–10 concrete scenarios across the halves, grouped into folders, with a folder-level *"First, log in with `{{EMAIL}}` and `{{PASSWORD}}`"* instruction on the authenticated folder so the prompts stay clean (see [Folder Instructions and Inheritance](#folder-instructions-and-inheritance)):
+Sample ask (adapt to whatever the form uses):
+
+> *"For the post-login scenarios I'll need a test account on production. Your login form takes `<field-1>` and `<field-2>` — set those as project environment variables in ProxyUser (named `<VAR-1>` and `<VAR-2>`), or paste them here and I'll set them. They're stored encrypted and never echoed back. The agent substitutes `{{<VAR-1>}}` and `{{<VAR-2>}}` in scenario prompts at run time."*
+
+Then propose 5–10 concrete scenarios across the halves, grouped into folders, with a folder-level *"First, log in with `{{<VAR-1>}}` and `{{<VAR-2>}}`"* instruction on the authenticated folder so the prompts stay clean (see [Folder Instructions and Inheritance](#folder-instructions-and-inheritance)). Example for an email + password app:
 
 > *"Based on the repo, here's what I'd start with — confirm or edit any, and tell me your production base URL:*
 >
@@ -208,6 +216,8 @@ Then propose 5–10 concrete scenarios across the halves, grouped into folders, 
 > *5. `User can create a new widget from the dashboard` — `/dashboard`*
 > *6. `User can edit an existing widget's settings` — `/dashboard`*
 > *7. `User can run a search and see results` — `/dashboard`"*
+
+For a username + password app, the same shape uses `{{USERNAME}}` / `{{PASSWORD}}`. Match the placeholders to what the form actually accepts.
 
 The split above (a few marketing assertions, a couple of auth-form actions, several authenticated app flows) is the right shape for almost every starter set — heavy on the authenticated app, light on chrome.
 
@@ -226,7 +236,7 @@ If the codebase obviously has these, mention them once *as opt-in*, then move on
 
 Limit to 5–10 scenarios. Quality over quantity. In order:
 
-1. **Core authenticated app functionality** — the things users *do* once logged in (post, send, create, edit, schedule, query, configure). This is usually the most valuable monitoring you can set up. Use folder-level login instructions with `{{EMAIL}}`/`{{PASSWORD}}`; ask for a test account if you don't have one.
+1. **Core authenticated app functionality** — the things users *do* once logged in (post, send, create, edit, schedule, query, configure). This is usually the most valuable monitoring you can set up. Use folder-level login instructions with whatever placeholders match the app's login form (`{{EMAIL}}`/`{{PASSWORD}}`, `{{USERNAME}}`/`{{PASSWORD}}`, etc. — see Step 1 *Auth shape*); ask for a test account if you don't have one. Skip this priority entirely on magic-link-only apps.
 2. **Public core functionality** — anything important that doesn't require auth (public tools, search, calculators, content lookup).
 3. **User acquisition** — signup form that ends on the dashboard or first-run state. Email/password and magic-link forms only — *not* OAuth.
 4. **High-value content pages** — pricing, key marketing pages, status/legal copy that costs you when it breaks. Use [assertion scenarios](#when-to-use-assertions-vs-actions).
@@ -237,7 +247,7 @@ Revenue-critical paths (checkout, payment, subscription upgrade) are deliberatel
 
 **Step 4: Create scenarios with proper organization.**
 
-Group related scenarios into folders. Create folders first, then add scenarios. Put authenticated scenarios behind a folder-level *"First, log in with `{{EMAIL}}` and `{{PASSWORD}}`"* instruction so the individual prompts stay clean.
+Group related scenarios into folders. Create folders first, then add scenarios. Put authenticated scenarios behind a folder-level *"First, log in with `{{<VAR-1>}}` and `{{<VAR-2>}}`"* instruction (using whatever placeholders match the app's login form) so the individual prompts stay clean.
 
 Example structure:
 ```
@@ -819,7 +829,7 @@ Focus on high-impact scenarios first. If this breaks, does the business suffer?
 
 **Cover these first (in order):**
 
-1. **Core authenticated app functionality** — what users *do* once logged in (post, send, create, edit, schedule, query, configure). Usually the most valuable thing to monitor. Use a folder with *"First, log in with `{{EMAIL}}` and `{{PASSWORD}}`"* instructions; ask for a test account if you don't have one.
+1. **Core authenticated app functionality** — what users *do* once logged in (post, send, create, edit, schedule, query, configure). Usually the most valuable thing to monitor. Use a folder with login instructions that match the app's actual auth form (`{{EMAIL}}`/`{{PASSWORD}}`, `{{USERNAME}}`/`{{PASSWORD}}`, etc.); ask for a test account if you don't have one. Skip on magic-link-only apps.
 2. **Public core functionality** — anything important that doesn't require auth (public tools, search, calculators, content lookup).
 3. **User acquisition** — signup → first-run state. Email/password and magic-link forms only; *not* OAuth.
 4. **High-value content pages** — pricing, key marketing copy, legal/status copy. Use assertion scenarios.
