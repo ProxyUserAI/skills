@@ -90,7 +90,7 @@ Then tell the user:
 
 **Step 4: Handle non-success responses.**
 
-- **409 Conflict (account exists):** Do not retry. Tell the user: *"You already have a ProxyUser account. Sign in at https://proxyuser.com/cli-onboard, copy the API key it gives you, and paste it here. I'll save it for you."* Accept the pasted `sk_live_…` token, validate it (below), then persist. Do not skip the validation.
+- **409 Conflict (account exists):** Do not retry. Tell the user: *"You already have a ProxyUser account. Sign in at https://proxyuser.com/agent-key, copy the API key it gives you, and paste it here. I'll save it for you."* Accept the pasted `sk_live_…` token, validate it (below), then persist. Do not skip the validation.
 - **429 Too Many Requests:** Surface the `Retry-After` header value to the user verbatim. Do not auto-retry. Limits: 5/min per IP, 3/hour per email.
 - **5xx or network failure:** Tell the user the request failed; offer to retry once.
 
@@ -102,7 +102,7 @@ curl -s -o /dev/null -w '%{http_code}' \
   -H "Authorization: Bearer <pasted_key>"
 ```
 
-Persist to `~/.proxyuser/config.json` (mode `0600`) only if the status is `200`. On `401`, tell the user the key didn't work and ask them to re-copy it from `/cli-onboard`.
+Persist to `~/.proxyuser/config.json` (mode `0600`) only if the status is `200`. On `401`, tell the user the key didn't work and ask them to re-copy it from `/agent-key`.
 
 ### OTP verify
 
@@ -697,7 +697,7 @@ When the API rejects a request, surface the error to the user — don't silently
 
 **401 Unauthorized**
 
-The API key in `~/.proxyuser/config.json` (or `$PROXYUSER_API_KEY`) is invalid, revoked, or still in `pending` scope. Either run the signup flow again, or have the user paste a fresh full-scope key from https://proxyuser.com/cli-onboard. Validate the pasted key with `GET /api/v1/projects` before persisting.
+The API key in `~/.proxyuser/config.json` (or `$PROXYUSER_API_KEY`) is invalid, revoked, or still in `pending` scope. Either run the signup flow again, or have the user paste a fresh full-scope key from https://proxyuser.com/agent-key. Validate the pasted key with `GET /api/v1/projects` before persisting.
 
 **403 invalid_otp**
 
@@ -705,7 +705,7 @@ The user typed the wrong 6-digit code. Response body includes `{ attempts_remain
 
 **409 Conflict (account exists)**
 
-Returned by `/agent/signup` when the email already has a ProxyUser account. Do not retry. Route the user to https://proxyuser.com/cli-onboard to copy a key, then validate (`GET /api/v1/projects`) and persist to `~/.proxyuser/config.json`.
+Returned by `/agent/signup` when the email already has a ProxyUser account. Do not retry. Route the user to https://proxyuser.com/agent-key to copy a key, then validate (`GET /api/v1/projects`) and persist to `~/.proxyuser/config.json`.
 
 **410 Gone (otp_expired)**
 

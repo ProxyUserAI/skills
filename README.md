@@ -65,13 +65,13 @@ Shape:
 }
 ```
 
-The key is never logged or echoed — when the agent has to mention it, it masks the value as `sk_live_••••<last4>`. To delete the key, remove the file. To rotate, run the signup flow again or paste a new key from `/cli-onboard`.
+The key is never logged or echoed — when the agent has to mention it, it masks the value as `sk_live_••••<last4>`. To delete the key, remove the file. To rotate, run the signup flow again or paste a new key from `/agent-key`.
 
 ## Existing accounts
 
 If you already have a ProxyUser account, the agentic signup will return HTTP 409 Conflict. The skill is built for this:
 
-1. Agent: "You already have a ProxyUser account. Sign in at https://proxyuser.com/cli-onboard, copy the API key it gives you, and paste it here."
+1. Agent: "You already have a ProxyUser account. Sign in at https://proxyuser.com/agent-key, copy the API key it gives you, and paste it here."
 2. You: paste the `sk_live_…` token.
 3. Agent: validates the key against `GET /api/v1/projects`, saves it to `~/.proxyuser/config.json` if it works, and continues with your task.
 
@@ -157,11 +157,11 @@ In tools that expose skills as slash commands (Claude Code, Cursor), invoke dire
 
 ## Errors
 
-**401 Unauthorized** — Your saved key is invalid, revoked, or still in `pending` scope (signup wasn't verified). The agent will re-run signup or accept a fresh key pasted from https://proxyuser.com/cli-onboard.
+**401 Unauthorized** — Your saved key is invalid, revoked, or still in `pending` scope (signup wasn't verified). The agent will re-run signup or accept a fresh key pasted from https://proxyuser.com/agent-key.
 
 **403 invalid_otp** — You typed the wrong 6-digit code. The response includes `attempts_remaining`; the agent surfaces the count and asks you to retry. After the limit, the agent restarts signup with a fresh email request.
 
-**409 Conflict (account exists)** — The email you gave already has a ProxyUser account. The agent routes you to https://proxyuser.com/cli-onboard to copy a key, then validates and saves it. Original signup is not retried.
+**409 Conflict (account exists)** — The email you gave already has a ProxyUser account. The agent routes you to https://proxyuser.com/agent-key to copy a key, then validates and saves it. Original signup is not retried.
 
 **410 Gone (otp_expired)** — The 6-digit code timed out (10-minute window). The agent restarts signup.
 
