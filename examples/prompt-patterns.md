@@ -109,6 +109,29 @@ User sees error for invalid file type
 User sees success toast after saving
 User sees error banner when something fails
 
+## Verification-Only Scenarios
+
+For pages where the goal is just *"this content should be visible"* — no clicks, no forms — use plain assertion phrasing. The planner verifies the text on the rendered page.
+
+```
+Pricing page shows Starter, Pro, and Scale tiers with monthly prices
+Homepage hero shows headline "Reply faster, sound human"
+BotBlock feature page explains bot detection for X replies
+Privacy policy page lists data retention details
+Changelog page shows the latest release notes
+```
+
+**Pick distinctive phrases.** Avoid asserting page chrome ("Sign up", "Login", "Footer") — those appear everywhere and don't prove the goal. Pick a 5–10 word substring that's specific to this page's content.
+
+**When to use these instead of an action scenario:**
+
+- Marketing pages where you ship copy changes (homepage, features, pricing)
+- Legal/compliance pages where the *content* is the contract (privacy, terms)
+- Documentation pages where the goal is "the page exists and explains X"
+- Status banners or product-update announcements
+
+If the goal involves a user *doing* something (clicking, signing up, searching), write an action scenario instead.
+
 ## E-commerce
 
 User can add item to cart
@@ -126,7 +149,7 @@ User can update profile information
 ## Tips
 
 - Focus on user intent, not mechanics
-- Start with "User can..." or "User sees..."
+- Start with "User can..." or "User sees..." for action scenarios; use "Page shows…" / "Page displays…" for verification-only scenarios
 - One scenario = one capability
 - Use {{EMAIL}} and {{PASSWORD}} for credentials
 - Only be specific when exact text matters

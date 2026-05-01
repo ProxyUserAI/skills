@@ -661,11 +661,25 @@ ProxyUser's AI browses like a human. Trust it to figure out the details—don't 
 User can sign up with a valid email address
 ```
 
+**Good (verification-only — no action needed):**
+```
+Pricing page shows "Pro plan — $49/mo"
+```
+
 **Bad:**
 ```
 User enters "test@example.com" in email field, clicks Submit button,
 sees "Check your inbox" confirmation message on screen
 ```
+
+### When to use assertions vs. actions
+
+Two flavors of scenario, both supported:
+
+- **Action scenarios** describe what a user *does* and what happens as a result. Use when the goal is "user does X and Y happens" (signup, checkout, search). Phrase as `User can…` or `User sees…` after an action.
+- **Assertion scenarios** describe rendered content the page should be showing, with no action required. Use when the goal is "page shows X" — marketing pages, pricing pages, legal copy, content updates. Phrase as `Page shows…`, `Page displays…`, `[Page name] lists…`.
+
+Pick a short, distinctive phrase that proves the goal — never assert page chrome ("Sign up", "Login", footer text). The planner uses your phrasing to look for visible text on the page.
 
 ### Code-to-Scenario Translation
 
@@ -678,6 +692,8 @@ When you implement a feature, ask: "What capability does this give the user?"
 | Add form validation | "User sees error when submitting with empty email" |
 | Add pagination | "User can load more items at bottom of list" |
 | Implement login | "User can log in with {{EMAIL}} and {{PASSWORD}}" |
+| Update pricing page | "Pricing page shows Starter, Pro, and Scale tiers with monthly prices" |
+| Publish a new feature page | "BotBlock feature page explains bot detection for X replies" |
 
 ### Environment Variables
 
@@ -793,7 +809,7 @@ Focus on high-impact scenarios first. If this breaks, does the business suffer?
 
 **Only test what can be completed entirely within the browser.**
 
-ProxyUser controls a browser. It cannot check email inboxes, receive SMS codes, or interact with external services.
+ProxyUser controls a browser. It cannot check email inboxes, receive SMS codes, or interact with external services. *Rendered* content (text and layout the page actually displays) is fair game and can be asserted directly without an action — see [When to use assertions vs. actions](#when-to-use-assertions-vs-actions). *External state* (something happened off-page) is not.
 
 ❌ **Do NOT create scenarios that require:**
 
@@ -813,6 +829,7 @@ ProxyUser controls a browser. It cannot check email inboxes, receive SMS codes, 
 | "User logs in with Google" | "User sees Google login button and it's clickable" |
 | "Payment completes successfully" | "User can submit payment form" (in test mode) |
 | "User gets Slack notification" | "User sees 'Notification sent' message in UI" |
+| "Email contains the new pricing" | "Pricing page shows the new \$49/mo tier" |
 
 ---
 
