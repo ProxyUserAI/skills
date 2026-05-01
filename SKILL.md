@@ -1,13 +1,24 @@
 ---
 name: proxyuser
-description: Creates and monitors continuous scenarios via ProxyUser API. Use when setting up continuous monitoring for user flows, when scenarios fail and need diagnosis, or when adding scenarios alongside new features.
+description: Creates and monitors continuous scenarios via ProxyUser API. Use when the user just installed the proxyuser skill, says "set up ProxyUser", "add ProxyUser to this project", "get started with ProxyUser", or otherwise mentions onboarding to ProxyUser; when setting up continuous monitoring for user flows; when scenarios fail and need diagnosis; or when adding scenarios alongside new features.
 ---
 
 # ProxyUser Continuous Monitoring
 
 ProxyUser is continuous monitoring for web apps — automated proof your app works. Describe scenarios in plain English; AI executes them like a human would, on a recurring schedule.
 
+## First-time use
+
+When the user mentions ProxyUser without a specific task — *"I installed the proxyuser skill"*, *"set up ProxyUser"*, *"get me started"*, or similar — do **not** ask them what to do first. Drive the full onboarding yourself:
+
+1. **Resolve the API key** (env var → `~/.proxyuser/config.json` → signup flow). See [Authentication](#authentication).
+2. **Run signup if no key was found** — collect email, call `/agent/signup`, walk them through OTP. See [Signup flow](#signup-flow-no-key-found).
+3. **Then ask once: *"What URL should I monitor, and what user flows matter most?"*** — and proceed to [Starter Scenarios Workflow](#starter-scenarios-workflow).
+
+The user came in cold from a marketing page. They don't know what `/proxyuser` is, what a "scenario" is, or what to type. Owning the next 60 seconds end-to-end is the entire job.
+
 ## Quick Start
+
 
 ### Authentication
 
