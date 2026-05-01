@@ -13,9 +13,9 @@ When the user mentions ProxyUser without a specific task — *"I installed the p
 
 1. **Resolve the API key** (env var → `~/.proxyuser/config.json` → signup flow). See [Authentication](#authentication).
 2. **Run signup if no key was found** — collect email, call `/agent/signup`, walk them through OTP. See [Signup flow](#signup-flow-no-key-found).
-3. **Then ask once: *"What URL should I monitor, and what user flows matter most?"*** — and proceed to [Starter Scenarios Workflow](#starter-scenarios-workflow).
+3. **Scan the codebase *before* asking anything else.** You are running inside the user's repo — use it. Read route files, page/component directories, navigation, and any marketing/landing copy (landing pages, hero sections, feature lists, README "About" sections). Build a real mental model of the product. Then go to [Starter Scenarios Workflow](#starter-scenarios-workflow) and present *specific, pre-filled* scenario proposals — not a generic "what flows matter?" menu. The only thing left to ask is the production base URL to run them against.
 
-The user came in cold from a marketing page. They don't know what `/proxyuser` is, what a "scenario" is, or what to type. Owning the next 60 seconds end-to-end is the entire job.
+The user came in cold from a marketing page. They don't know what `/proxyuser` is, what a "scenario" is, or what to type. Owning the next 60 seconds end-to-end is the entire job — and *"what flows matter to you?"* is a non-answer when you're sitting on the source code.
 
 ## Quick Start
 
@@ -162,52 +162,69 @@ If the user invokes `/proxyuser` without specifying what they want to do:
 
 ### Starter Scenarios Workflow
 
-When the user chooses "Generate starter scenarios":
+When the user chooses "Generate starter scenarios" (or you're driving onboarding from [First-time use](#first-time-use)):
 
-**Step 1: Understand the application**
+**Step 1: Scan the codebase.**
 
-Analyze the codebase to identify:
-- App type (e-commerce, SaaS, content site, etc.)
-- Main user-facing routes and pages
-- Authentication patterns (email/password, OAuth, magic link)
-- Core features that deliver user value
+Read enough of the repo to know what the product *actually does*. Don't skim — this is what makes the rest non-generic. Spend the time here.
 
-Look at: route files, navigation components, page directories, and any existing scenario coverage.
-
-**Step 2: Check existing coverage**
-
-List all existing scenarios in the project to avoid duplicates:
+- **Route definitions.** `config/routes.rb`, `app/router.tsx`, `pages/`, `app/`, `routes/` — map the user-facing URLs.
+- **Page/component directories.** `app/frontend/pages/`, `src/pages/`, `app/`, `components/` — what does each major page do?
+- **Navigation components.** Top nav, sidebar, footer — these reveal the *user's* mental map of the app, not the developer's file tree.
+- **Marketing copy.** Landing page hero, feature sections, pricing copy, README "About" — the product's own pitch tells you what flow delivers the core value.
+- **Existing scenario coverage** — list scenarios already in the project to avoid duplicates:
 
 ```bash
 curl -s "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
   -H "Authorization: Bearer $PROXYUSER_API_KEY" | jq '.data.scenarios[].prompt'
 ```
 
-**Step 3: Suggest foundational scenarios**
+**Step 2: Propose specific scenarios — pre-filled, not a generic menu.**
 
-Recommend scenarios following the prioritization order:
+Don't list categories ("Signup", "Login", "Checkout"). Write the actual scenario prompt and the actual path, derived from what you read in Step 1, and present 3–6 concrete options the user can accept or edit:
 
-1. **Revenue-critical paths** - Checkout, payment, upgrade flows
-2. **User acquisition** - Signup, onboarding
-3. **Core product value** - The main thing users come to do
-4. **Authentication** - Login, logout, password reset
+> *"Based on the repo, here's what I'd start with — confirm or edit any of these, and tell me your production base URL:*
+> *1. `User can sign up with email and reach the dashboard` — `/signup`*
+> *2. `User can create a new widget from the empty dashboard` — `/dashboard`*
+> *3. `Pricing page shows Starter, Pro, and Scale tiers with monthly prices` — `/pricing`"*
 
-Limit initial suggestions to 5-10 high-impact scenarios. Quality over quantity.
+**Hard exclusions — never auto-suggest these in starter scenarios**, even if the codebase obviously has them:
 
-**Step 4: Create scenarios with proper organization**
+- **Third-party OAuth login** (Google, Apple, GitHub, Microsoft, etc.) — hits external IdPs; breaks under bot detection in production.
+- **Stripe / payment checkout** — even in test mode. Starters typically run against production, where a test-mode scenario will fail or, worse, charge.
+- **Connecting external accounts** (X/Twitter, Slack, Google Drive, GitHub, social/CRM/ad platforms — anything the user "connects" via OAuth from inside the app).
+- **Anything that sends real email, SMS, webhooks, or notifications** to external systems and depends on the response.
 
-Group related scenarios into folders. Create folders first, then add scenarios to them.
+If the codebase obviously has these, mention them once *as opt-in*, then move on:
 
-Example structure for an e-commerce app:
+> *"I'm skipping the Google login, Stripe checkout, and X-account-connect flows from the starter set — those hit external services and aren't safe to run against production on a schedule. Add them yourself if you've got a sandbox you're happy to point them at."*
+
+**Step 3: Prioritize what makes the cut.**
+
+Limit to 5–10 scenarios. Quality over quantity. In order:
+
+1. **Core product value** — the main thing users come to the app to do (post a thing, run a query, send a message, create a record). If this breaks, the product is broken.
+2. **User acquisition** — signup form that ends on the dashboard or first-run state. Email/password and magic-link forms only — *not* OAuth.
+3. **Authentication** — log in with email/password, log out, the password-reset *form* (not the email step).
+4. **High-value content pages** — pricing, key marketing pages, status/legal copy that costs you when it breaks. Use [assertion scenarios](#when-to-use-assertions-vs-actions).
+5. **Key error states** — only if user-visible and high-traffic.
+
+Revenue-critical paths (checkout, payment, subscription upgrade) are deliberately *not* on this list — see the hard exclusions above. The user can add a sandboxed version manually later.
+
+**Step 4: Create scenarios with proper organization.**
+
+Group related scenarios into folders. Create folders first, then add scenarios.
+
+Example structure:
 ```
 📁 Authentication
-   - User can sign up with email
-   - User can log in with credentials
-📁 Shopping
-   - User can add item to cart
-   - User can view cart
-📁 Checkout
-   - User can complete purchase
+   - User can sign up with email and reach the dashboard
+   - User can log in with email and password
+📁 Core flows
+   - User can create a widget from the dashboard
+   - User can edit an existing widget
+📁 Marketing
+   - Pricing page shows Starter, Pro, and Scale tiers
 ```
 
 ---
@@ -776,11 +793,20 @@ Focus on high-impact scenarios first. If this breaks, does the business suffer?
 
 **Cover these first (in order):**
 
-1. **Revenue-critical paths** - Checkout, payment, subscription upgrades
-2. **User acquisition** - Signup, onboarding completion
-3. **Core product value** - The main thing users come to do
-4. **Authentication** - Login, logout, password reset
-5. **Key error states** - Validation errors, failure messages users need to see
+1. **Core product value** — the main thing users come to do (post, send, create, query, schedule, etc.)
+2. **User acquisition** — signup → first-run state. Email/password and magic-link forms only; *not* OAuth.
+3. **Authentication** — login form, logout, password-reset *form* (not the email step)
+4. **High-value content pages** — pricing, key marketing copy, legal/status copy. Use assertion scenarios.
+5. **Key error states** — validation errors and failure messages users actually see
+
+**Do not auto-suggest these — they hit external systems and aren't safe to run against production on a schedule:**
+
+- Third-party OAuth login (Google, Apple, GitHub, Microsoft, etc.)
+- Stripe / payment checkout (even in test mode — starters typically run against production)
+- Connecting external accounts (X/Twitter, Slack, Google Drive, social/CRM integrations, ad platforms)
+- Anything depending on real email, SMS, webhooks, or external service callbacks
+
+The user can add sandboxed versions of these manually later if they've got an isolated environment for them. Don't put them in a starter set.
 
 **Skip these (low impact):**
 - Cosmetic hover states
@@ -815,9 +841,10 @@ ProxyUser controls a browser. It cannot check email inboxes, receive SMS codes, 
 
 - Checking email (verification links, password reset emails)
 - SMS or phone verification
-- Third-party OAuth (Google, Apple, Facebook login buttons)
+- Third-party OAuth login (Google, Apple, Facebook, GitHub, Microsoft, etc.)
+- Connecting third-party accounts from inside the app (X/Twitter, Slack, Google Drive, social/CRM/ad-platform integrations — anything the user "links" via OAuth)
 - External service responses (Slack notifications, webhook deliveries)
-- Real payment processing (use test/sandbox modes instead)
+- Real payment processing — and don't auto-suggest test/sandbox checkout in starter scenarios either, since starters usually run against production
 - Mobile app interactions
 - Desktop notifications or OS-level prompts
 
@@ -829,7 +856,7 @@ ProxyUser controls a browser. It cannot check email inboxes, receive SMS codes, 
 | "User logs in with Google" | "User sees Google login button and it's clickable" |
 | "Payment completes successfully" | "User can submit payment form" (in test mode) |
 | "User gets Slack notification" | "User sees 'Notification sent' message in UI" |
-| "Email contains the new pricing" | "Pricing page shows the new \$49/mo tier" |
+| "Email contains the new pricing" | "Pricing page shows the new $49/mo tier" |
 
 ---
 
