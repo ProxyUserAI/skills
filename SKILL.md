@@ -179,16 +179,39 @@ curl -s "https://proxyuser.com/api/v1/projects/$PROJECT_ID/scenarios" \
   -H "Authorization: Bearer $PROXYUSER_API_KEY" | jq '.data.scenarios[].prompt'
 ```
 
-**Step 2: Propose specific scenarios — pre-filled, not a generic menu.**
+**Step 2: Propose specific scenarios — including the authenticated app.**
 
-Don't list categories ("Signup", "Login", "Checkout"). Write the actual scenario prompt and the actual path, derived from what you read in Step 1, and present 3–6 concrete options the user can accept or edit:
+Don't list categories ("Signup", "Login", "Checkout"). Write the actual scenario prompt and the actual path, derived from what you read in Step 1.
 
-> *"Based on the repo, here's what I'd start with — confirm or edit any of these, and tell me your production base URL:*
-> *1. `User can sign up with email and reach the dashboard` — `/signup`*
-> *2. `User can create a new widget from the empty dashboard` — `/dashboard`*
-> *3. `Pricing page shows Starter, Pro, and Scale tiers with monthly prices` — `/pricing`"*
+Cover **both halves of the app**:
 
-**Hard exclusions — never auto-suggest these in starter scenarios**, even if the codebase obviously has them:
+- **Public pages** — marketing, pricing, public tools, content pages users see before signing in.
+- **Authenticated app functionality** — the dashboards, editors, settings pages, and workflows users actually *do* once logged in. **This is usually what the user cares about most**, and the most likely thing to silently break. Do not skip it just because it sits behind a login form.
+
+If the codebase has authenticated routes (and most apps do), **ask for a test account up front** as part of your proposal — don't quietly skip the post-login work:
+
+> *"For the post-login scenarios I'll need a test account on production. Either set `EMAIL` and `PASSWORD` as project environment variables in ProxyUser, or paste them here and I'll set them. They're stored encrypted and never echoed back. The agent uses `{{EMAIL}}` and `{{PASSWORD}}` in scenario prompts to fill in the values at run time."*
+
+Then propose 5–10 concrete scenarios across the halves, grouped into folders, with a folder-level *"First, log in with `{{EMAIL}}` and `{{PASSWORD}}`"* instruction on the authenticated folder so the prompts stay clean (see [Folder Instructions and Inheritance](#folder-instructions-and-inheritance)):
+
+> *"Based on the repo, here's what I'd start with — confirm or edit any, and tell me your production base URL:*
+>
+> *📁 Marketing*
+> *1. `Homepage hero shows "Stop missing the conversations that matter"` — `/`*
+> *2. `Pricing page shows Free, Pro, and Scale tiers with monthly prices` — `/pricing`*
+>
+> *📁 Authentication*
+> *3. `User can sign up with a new email and password and reach the dashboard` — `/signup`*
+> *4. `User can sign in with {{EMAIL}} and {{PASSWORD}} and reach the dashboard` — `/signin`*
+>
+> *📁 Core flows (folder instructions: "First, log in with {{EMAIL}} and {{PASSWORD}}")*
+> *5. `User can create a new widget from the dashboard` — `/dashboard`*
+> *6. `User can edit an existing widget's settings` — `/dashboard`*
+> *7. `User can run a search and see results` — `/dashboard`"*
+
+The split above (a few marketing assertions, a couple of auth-form actions, several authenticated app flows) is the right shape for almost every starter set — heavy on the authenticated app, light on chrome.
+
+**Hard exclusions — never auto-suggest these**, even if the codebase obviously has them:
 
 - **Third-party OAuth login** (Google, Apple, GitHub, Microsoft, etc.) — hits external IdPs; breaks under bot detection in production.
 - **Stripe / payment checkout** — even in test mode. Starters typically run against production, where a test-mode scenario will fail or, worse, charge.
@@ -203,28 +226,31 @@ If the codebase obviously has these, mention them once *as opt-in*, then move on
 
 Limit to 5–10 scenarios. Quality over quantity. In order:
 
-1. **Core product value** — the main thing users come to the app to do (post a thing, run a query, send a message, create a record). If this breaks, the product is broken.
-2. **User acquisition** — signup form that ends on the dashboard or first-run state. Email/password and magic-link forms only — *not* OAuth.
-3. **Authentication** — log in with email/password, log out, the password-reset *form* (not the email step).
+1. **Core authenticated app functionality** — the things users *do* once logged in (post, send, create, edit, schedule, query, configure). This is usually the most valuable monitoring you can set up. Use folder-level login instructions with `{{EMAIL}}`/`{{PASSWORD}}`; ask for a test account if you don't have one.
+2. **Public core functionality** — anything important that doesn't require auth (public tools, search, calculators, content lookup).
+3. **User acquisition** — signup form that ends on the dashboard or first-run state. Email/password and magic-link forms only — *not* OAuth.
 4. **High-value content pages** — pricing, key marketing pages, status/legal copy that costs you when it breaks. Use [assertion scenarios](#when-to-use-assertions-vs-actions).
-5. **Key error states** — only if user-visible and high-traffic.
+5. **Authentication entry** — login form, logout, password-reset *form* (not the email step). Lower priority than what's *behind* the login.
+6. **Key error states** — only if user-visible and high-traffic.
 
 Revenue-critical paths (checkout, payment, subscription upgrade) are deliberately *not* on this list — see the hard exclusions above. The user can add a sandboxed version manually later.
 
 **Step 4: Create scenarios with proper organization.**
 
-Group related scenarios into folders. Create folders first, then add scenarios.
+Group related scenarios into folders. Create folders first, then add scenarios. Put authenticated scenarios behind a folder-level *"First, log in with `{{EMAIL}}` and `{{PASSWORD}}`"* instruction so the individual prompts stay clean.
 
 Example structure:
 ```
+📁 Marketing
+   - Homepage hero shows the current pitch
+   - Pricing page shows Free, Pro, and Scale tiers
 📁 Authentication
    - User can sign up with email and reach the dashboard
-   - User can log in with email and password
-📁 Core flows
+   - User can sign in with {{EMAIL}} and {{PASSWORD}}
+📁 Core flows  (instructions: "First, log in with {{EMAIL}} and {{PASSWORD}}")
    - User can create a widget from the dashboard
-   - User can edit an existing widget
-📁 Marketing
-   - Pricing page shows Starter, Pro, and Scale tiers
+   - User can edit a widget's settings
+   - User can search and see results
 ```
 
 ---
@@ -793,11 +819,12 @@ Focus on high-impact scenarios first. If this breaks, does the business suffer?
 
 **Cover these first (in order):**
 
-1. **Core product value** — the main thing users come to do (post, send, create, query, schedule, etc.)
-2. **User acquisition** — signup → first-run state. Email/password and magic-link forms only; *not* OAuth.
-3. **Authentication** — login form, logout, password-reset *form* (not the email step)
+1. **Core authenticated app functionality** — what users *do* once logged in (post, send, create, edit, schedule, query, configure). Usually the most valuable thing to monitor. Use a folder with *"First, log in with `{{EMAIL}}` and `{{PASSWORD}}`"* instructions; ask for a test account if you don't have one.
+2. **Public core functionality** — anything important that doesn't require auth (public tools, search, calculators, content lookup).
+3. **User acquisition** — signup → first-run state. Email/password and magic-link forms only; *not* OAuth.
 4. **High-value content pages** — pricing, key marketing copy, legal/status copy. Use assertion scenarios.
-5. **Key error states** — validation errors and failure messages users actually see
+5. **Authentication entry** — login form, logout, password-reset *form*. Lower priority than what's behind it.
+6. **Key error states** — validation errors and failure messages users actually see
 
 **Do not auto-suggest these — they hit external systems and aren't safe to run against production on a schedule:**
 
