@@ -14,25 +14,31 @@ npx skills add proxyuserai/skills
 
 ### Manual installation
 
-Copy the `SKILL.md` file to your project:
+Skills must live in a folder whose name matches the `name` field in `SKILL.md` (here, `proxyuser`). Copy the file like this:
 
 ```bash
-# For Claude Code
-mkdir -p .claude/skills && cp SKILL.md .claude/skills/
+# Project-level (recommended) — works in Claude Code, Cursor, and Copilot
+mkdir -p .agents/skills/proxyuser && cp SKILL.md .agents/skills/proxyuser/
 
-# For GitHub Copilot
-mkdir -p .github/skills && cp SKILL.md .github/skills/
-
-# For Cursor
-mkdir -p .cursor/skills && cp SKILL.md .cursor/skills/
+# User-level (available across all your repos)
+mkdir -p ~/.agents/skills/proxyuser && cp SKILL.md ~/.agents/skills/proxyuser/
 ```
+
+Tool-specific paths also work:
+
+| Tool | Project location | User location |
+|------|------------------|---------------|
+| Claude Code | `.claude/skills/proxyuser/SKILL.md` | `~/.claude/skills/proxyuser/SKILL.md` |
+| Cursor | `.cursor/skills/proxyuser/SKILL.md` | `~/.cursor/skills/proxyuser/SKILL.md` |
+| Copilot (VS Code) | `.github/skills/proxyuser/SKILL.md` | `~/.copilot/skills/proxyuser/SKILL.md` |
+
 
 ## Quick Start
 
 1. **Install the skill** (above).
 
 2. **Ask your AI assistant** to create a scenario:
-   > "Create a ProxyUser scenario for the sign-in flow on https://myapp.com/login"
+   > "Create a ProxyUser scenario for the sign-in flow on https://example.com/login"
 
    The skill handles signup itself: it asks for your email, sends a 6-digit code there, takes the code back from you, and saves the resulting API key to `~/.proxyuser/config.json` (mode `0600`). No dashboard required.
 
@@ -83,7 +89,7 @@ With this skill, your AI assistant can drive ProxyUser end-to-end. The dashboard
 - **Manage project environment variables** — test secrets like `STRIPE_TEST_KEY`; values are encrypted at rest and never returned
 - **Rotate your ProxyUser API key** — new key, swap the local config, then revoke the old one (in that order)
 
-Plus the original scenario authoring: create monitoring scenarios from code, re-run against preview deployments, set up GitHub Actions.
+Plus the original scenario authoring: create monitoring scenarios from code and re-run them against preview deploys via `POST /projects/:id/run_all`.
 
 ## Examples
 
@@ -91,34 +97,34 @@ Three flows the skill handles cleanly. Each shows the user prompt and the result
 
 ### Signup flow
 
-> "Add a ProxyUser scenario for email/password signup on https://myapp.com/signup, ending on the dashboard."
+> "Add a ProxyUser scenario for email/password signup on https://example.com/signup, ending on the dashboard."
 
 ```json
 {
   "prompt": "User signs up with email and password, then sees the dashboard.",
-  "url": "https://myapp.com/signup"
+  "url": "https://example.com/signup"
 }
 ```
 
 ### Sign-in flow
 
-> "Add a ProxyUser scenario for the sign-in flow on https://myapp.com/login."
+> "Add a ProxyUser scenario for the sign-in flow on https://example.com/login."
 
 ```json
 {
   "prompt": "User signs in with email and password, then sees the dashboard.",
-  "url": "https://myapp.com/login"
+  "url": "https://example.com/login"
 }
 ```
 
 ### Billing-checkout flow
 
-> "Add a ProxyUser scenario for checkout starting at https://myapp.com/products."
+> "Add a ProxyUser scenario for checkout starting at https://example.com/products."
 
 ```json
 {
   "prompt": "User adds an item to the cart, proceeds to checkout, completes a Stripe test payment, and sees the order confirmation page.",
-  "url": "https://myapp.com/products"
+  "url": "https://example.com/products"
 }
 ```
 
@@ -128,7 +134,7 @@ In all cases the skill sends only `{ prompt, url }`. The first run auto-enqueues
 
 ### Slash command
 
-Invoke directly:
+In tools that expose skills as slash commands (Claude Code, Cursor), invoke directly:
 ```
 /proxyuser
 ```
@@ -137,11 +143,11 @@ Invoke directly:
 
 > "Create scenarios for the new checkout feature I just implemented"
 
-> "Run all ProxyUser scenarios against the preview URL"
+> "Run all ProxyUser scenarios against the preview URL at https://staging.example.com"
 
 > "Why did the login scenario fail? Check the ProxyUser diagnosis"
 
-> "Set up GitHub Actions to run ProxyUser scenarios on every PR"
+> "Mute the login scenario for 2 hours while I fix this"
 
 ## Documentation
 

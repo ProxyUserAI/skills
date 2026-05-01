@@ -1168,39 +1168,18 @@ If the loop exits without the change, do not retry the action — surface the ti
 
 ---
 
-## CI/CD Integration
+## Triggering scenarios after a deploy
 
-### GitHub Actions (Vercel Preview Deploys)
+Continuous monitoring runs on a schedule — that's the default. If you also want to re-run the suite immediately after a deploy completes, use `POST /projects/:id/run_all` from your deploy hook (Vercel Deploy Hooks, Netlify build notifications, GitHub `deployment_status` webhooks, your own deploy script). See [Run All Scenarios on Preview Deploy](#run-all-scenarios-on-preview-deploy) above for the request shape.
 
-```yaml
-name: ProxyUser Scenarios
-on:
-  deployment_status:
+ProxyUser is not a pre-merge PR gate — failures don't block deploys. The model is "monitor what's live and tell me when something breaks," not "fail CI on a flaky run."
 
-jobs:
-  scenarios:
-    if: github.event.deployment_status.state == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: proxyuserai/action@v1
-        with:
-          api-key: ${{ secrets.PROXYUSER_API_KEY }}
-          project-id: 'proj_xxx'
-          target-url: ${{ github.event.deployment_status.target_url }}
-          fail-on-test-failure: 'true'
-```
-
-### Other CI Systems
-
-Use `POST /projects/:id/run_all` to re-run an existing scenario suite against a target URL, then poll `GET /runs/:id` for each returned run.
-
-Full CI/CD documentation: https://proxyuser.com/docs#github-integration
 
 ---
 
 ## Troubleshooting
 
-### Scenario passes locally but fails in CI
+### Scenario fails against a preview URL
 
 - Check if `target_url` override is correct
 - Verify environment variables are set in ProxyUser dashboard
@@ -1220,4 +1199,3 @@ The API allows 100 requests per minute per API key. For bulk operations, use `ru
 
 - **Full API Docs**: https://proxyuser.com/docs
 - **Dashboard**: https://proxyuser.com
-- **GitHub Action**: https://github.com/proxyuserai/action
